@@ -22,6 +22,13 @@ export const PALETTE = [
 // Sentinel color value for "dead"
 export const DEAD = 0;
 
+/** A single cell change delta. `color` is packed RGB; 0 = dead. */
+export interface CellChange {
+  x: number;
+  y: number;
+  color: number;
+}
+
 // ---- Grid helper functions ----
 export function createEmptyGrid(): Uint32Array {
   return new Uint32Array(GRID_SIZE);

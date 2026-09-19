@@ -21,3 +21,18 @@ export const PALETTE = [
 
 // Sentinel color value for "dead"
 export const DEAD = 0;
+
+// ---- Grid helper functions ----
+export function createEmptyGrid(): Uint32Array {
+  return new Uint32Array(GRID_SIZE);
+}
+
+/** Convert grid (x, y) coordinates to a flat array index. */
+export function indexOf(x: number, y: number): number {
+  return y * GRID_WIDTH + x;
+}
+
+/** Set a single cell's color (0 = dead). */
+export function setCell(grid: Uint32Array, x: number, y: number, color: number): void {
+  grid[indexOf(x, y)] = color;
+}

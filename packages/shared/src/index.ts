@@ -36,3 +36,20 @@ export function indexOf(x: number, y: number): number {
 export function setCell(grid: Uint32Array, x: number, y: number, color: number): void {
   grid[indexOf(x, y)] = color;
 }
+
+/** Wrap an x coordinate into [0, GRID_WIDTH). */
+export function wrapX(x: number): number {
+  const remainder = x % GRID_WIDTH;
+  return remainder < 0 ? remainder + GRID_WIDTH : remainder;
+}
+
+/** Wrap a y coordinate into [0, GRID_HEIGHT). */
+export function wrapY(y: number): number {
+  const remainder = y % GRID_HEIGHT;
+  return remainder < 0 ? remainder + GRID_HEIGHT : remainder;
+}
+
+/** Whether the given coordinates are inside the board. */
+export function inBounds(x: number, y: number): boolean {
+  return x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT;
+}

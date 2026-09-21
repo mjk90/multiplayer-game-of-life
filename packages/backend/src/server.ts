@@ -1,7 +1,7 @@
 import { createServer, Server as HttpServer } from 'node:http';
 import { Server as SocketIoServer } from 'socket.io';
 import { Game } from './game';
-import { EVENTS, GameSnapshot, GRID_HEIGHT, GRID_WIDTH, PALETTE, StatusPacket } from '@life/shared';
+import { EVENTS, GameSnapshot, GameTickPacket, GRID_HEIGHT, GRID_WIDTH, PALETTE, StatusPacket } from '@life/shared';
 
 export interface GameServer {
   io: SocketIoServer;
@@ -29,6 +29,12 @@ export function startServer(port = 3001): Promise<GameServer> {
   const io = new SocketIoServer(httpServer, { cors: corsOptions });
   const game = new Game();
   game.start();
+
+  game.onTick = (result) => {
+    const packet: GameTickPacket = { tick: result.tick, changes: result.changes };
+    io.emit(EVENTS.delta, packet);
+    io.emit(EVENTS.status, status(game, io.engine.clientsCount));
+  };
 
   io.on('connection', (socket) => {
     console.log('Client connected', socket.id);

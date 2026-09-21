@@ -1,4 +1,4 @@
-import { EVENTS, GameSnapshot, GRID_SIZE, StatusPacket } from '@life/shared';
+import { EVENTS, GameSnapshot, GameTickPacket, GRID_SIZE, GRID_WIDTH, indexOf, StatusPacket } from '@life/shared';
 import { useEffect, useRef, useState } from 'react';
 
 import { io, Socket } from 'socket.io-client';
@@ -20,6 +20,7 @@ export interface GameSocketApi {
 
 export function useGameSocket() {
   const socketRef = useRef<Socket | null>(null);
+  const lastTickRef = useRef(-1);
 
   const [grid, setGrid] = useState<Uint32Array>(() => new Uint32Array(GRID_SIZE));
   const [tick, setTick] = useState(0);
@@ -42,6 +43,19 @@ export function useGameSocket() {
     });
 
     socket.on(EVENTS.status, (status: StatusPacket) => setStatus({ running: status.running, online: status.online }));
+
+    socket.on(EVENTS.delta, (packet: GameTickPacket) => {
+      if (packet.tick <= lastTickRef.current) return; // avoid stale or duplicate deltas
+      lastTickRef.current = packet.tick;
+      setTick(packet.tick);
+      setGrid((prev) => {
+        const next = new Uint32Array(prev);
+        for (const change of packet.changes) {
+          next[indexOf(change.x, change.y)] = change.color;
+        }
+        return next;
+      });
+    });
 
     return () => {
       socket.disconnect();

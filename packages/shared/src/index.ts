@@ -21,3 +21,42 @@ export const PALETTE = [
 
 // Sentinel color value for "dead"
 export const DEAD = 0;
+
+/** A single cell change delta. `color` is packed RGB; 0 = dead. */
+export interface CellChange {
+  x: number;
+  y: number;
+  color: number;
+}
+
+// ---- Grid helper functions ----
+export function createEmptyGrid(): Uint32Array {
+  return new Uint32Array(GRID_SIZE);
+}
+
+/** Convert grid (x, y) coordinates to a flat array index. */
+export function indexOf(x: number, y: number): number {
+  return y * GRID_WIDTH + x;
+}
+
+/** Set a single cell's color (0 = dead). */
+export function setCell(grid: Uint32Array, x: number, y: number, color: number): void {
+  grid[indexOf(x, y)] = color;
+}
+
+/** Wrap an x coordinate into [0, GRID_WIDTH). */
+export function wrapX(x: number): number {
+  const remainder = x % GRID_WIDTH;
+  return remainder < 0 ? remainder + GRID_WIDTH : remainder;
+}
+
+/** Wrap a y coordinate into [0, GRID_HEIGHT). */
+export function wrapY(y: number): number {
+  const remainder = y % GRID_HEIGHT;
+  return remainder < 0 ? remainder + GRID_HEIGHT : remainder;
+}
+
+/** Whether the given coordinates are inside the board. */
+export function inBounds(x: number, y: number): boolean {
+  return x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT;
+}

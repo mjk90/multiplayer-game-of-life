@@ -43,6 +43,7 @@ body {
   border-radius: 999px;
   border: 1px solid;
   white-space: nowrap;
+  cursor: pointer;
 }
 
 .status-badge.is-online {

@@ -7,7 +7,8 @@ export default function App() {
     tick, 
     myColor, 
     status, 
-    connectionState
+    connectionState,
+    toggleConnection
   } = useGameSocket();
 
   useEffect(() => {
@@ -19,12 +20,17 @@ export default function App() {
       <header className="app-header">
         <h1>Multiplayer Game of Life</h1>
         <div className="app-header-right">
-          <span
+          <span onClick={toggleConnection}
             className={`status-badge ${connectionState === ConnectionState.Connected ? 'is-online' : connectionState === ConnectionState.Connecting ? 'is-connecting' : 'is-offline'}`}>
             {connectionState === ConnectionState.Connecting ? 'connecting…' : connectionState}
           </span>
         </div>
       </header>
+
+      <footer className="app-footer">
+        <span>generation {tick}</span>
+        <span>{status.online} online</span>
+      </footer>
     </main>
   );
 }

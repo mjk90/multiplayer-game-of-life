@@ -9,6 +9,15 @@ export enum ConnectionState {
   Disconnected = 'disconnected',
 }
 
+export interface GameSocketApi {
+  grid: Uint32Array;
+  tick: number;
+  myColor: number;
+  status: StatusPacket;
+  connectionState: ConnectionState;
+  toggleConnection: () => void;
+}
+
 export function useGameSocket() {
   const socketRef = useRef<Socket | null>(null);
 
@@ -40,5 +49,15 @@ export function useGameSocket() {
     };
   }, []);
 
-  return {  grid, tick, myColor, status, connectionState };
+  const toggleConnection = () => {
+    if (socketRef.current?.connected) {
+      setConnectionState(ConnectionState.Disconnected);
+      socketRef.current.disconnect();
+    } else {
+      setConnectionState(ConnectionState.Connecting);
+      socketRef.current?.connect();
+    }
+  }
+
+  return { grid, tick, myColor, status, connectionState, toggleConnection };
 }

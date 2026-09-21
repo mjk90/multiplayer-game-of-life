@@ -7,6 +7,50 @@ export const GRID_WIDTH = 200;
 export const GRID_HEIGHT = 200;
 export const GRID_SIZE = GRID_WIDTH * GRID_HEIGHT;
 
+//  ---- Websocket types ----
+
+// Socket.IO event names
+export const EVENTS = {
+  paint: 'paint',
+  snapshot: 'snapshot',
+  delta: 'delta',
+  clear: 'clear',
+  placePattern: 'placePattern',
+  status: 'status',
+} as const;
+
+/**
+ * Full board state sent on connect/reconnect.
+ * `cells` is a flat array of packed RGB colors (0 = dead) with length GRID_SIZE.
+ * `yourColor` is the connected client's assigned color.
+ */
+export interface GameSnapshot {
+  tick: number;
+  width: number;
+  height: number;
+  cells: number[];
+  clientColor: number;
+}
+
+/** A single cell change emitted in a delta. `color` is packed RGB; 0 = dead. */
+export interface CellChange {
+  x: number;
+  y: number;
+  color: number;
+}
+
+/** Per-tick delta: only the cells that changed this generation. We don't want to send the whole board on each tick */
+export interface GameTickPacket {
+  tick: number;
+  changes: CellChange[];
+}
+
+/** Status info broadcast alongside each tick. */
+export interface StatusPacket {
+  running: boolean;
+  online: number;
+}
+
 // ---- Cell Colors ----
 export const PALETTE = [
   0x22d3ee, // cyan

@@ -106,7 +106,7 @@ export class Game {
     this.next = this.computeNextGeneration(this.current);
     this.current = this.next;
     this.tick++;
-    return { tick: this.tick, changes: [] };
+    return { tick: this.tick, changes: [] }; // TODO: compute deltas (only the cells that changed) to send to clients
   }
 
   private scheduleNextTick(): void {

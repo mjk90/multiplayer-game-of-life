@@ -1,7 +1,7 @@
 import { createServer, Server as HttpServer } from 'node:http';
 import { Server as SocketIoServer } from 'socket.io';
 import { Game } from './game';
-import { EVENTS, GameSnapshot, GameTickPacket, GRID_HEIGHT, GRID_WIDTH, PALETTE, StatusPacket } from '@life/shared';
+import { EVENTS, GameSnapshot, GameTickPacket, GRID_HEIGHT, GRID_WIDTH, inBounds, PaintPacket, PALETTE, StatusPacket } from '@life/shared';
 
 export interface GameServer {
   io: SocketIoServer;
@@ -43,6 +43,26 @@ export function startServer(port = 3001): Promise<GameServer> {
     // Send snapshot & status info of the current game state to the newly connected client
     socket.emit(EVENTS.snapshot, snapshot(game, color));
     socket.emit(EVENTS.status, status(game, io.engine.clientsCount));
+
+    // Register paint event sent from clients. This is how users interact with the board
+    socket.on(EVENTS.paint, (payload: PaintPacket) => {
+      const cells = payload?.cells;
+      console.log("paint event", { cells })
+      if (!Array.isArray(cells)) return;
+      for (const cell of cells) {
+        const { x, y } = cell;
+        
+        if (typeof x !== 'number' || typeof y !== 'number') {
+          return;
+        }
+
+        if(!inBounds(x, y)) {
+          return;
+        }
+
+        game.queuePaint(x, y, color);
+      }
+    });
   });
 
   return new Promise((resolve) => {

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { ConnectionState, useGameSocket } from './hooks/useGameSocket';
+import { GameBoard } from './components/GameBoard';
 
 export default function App() {
   const {
@@ -26,6 +27,8 @@ export default function App() {
           </span>
         </div>
       </header>
+
+      <GameBoard grid={grid} onPaint={() => {}} />
 
       <footer className="app-footer">
         <span>generation {tick}</span>

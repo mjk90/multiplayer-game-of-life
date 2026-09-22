@@ -51,6 +51,17 @@ export interface StatusPacket {
   online: number;
 }
 
+/** A single cell to paint (the server applies the sender's color so we don't need to send too much data). */
+export interface PaintCell {
+  x: number;
+  y: number;
+}
+
+/** A batch of paint intents sent from a client. */
+export interface PaintPacket {
+  cells: PaintCell[];
+}
+
 // ---- Cell Colors ----
 export const PALETTE = [
   0x22d3ee, // cyan

@@ -1,4 +1,4 @@
-import { DEAD, GRID_HEIGHT, GRID_WIDTH, indexOf } from "@life/shared";
+import { DEAD, GRID_HEIGHT, GRID_WIDTH, indexOf, PaintCell } from "@life/shared";
 
 export const COLOR_BG = '#0f172a';
 
@@ -34,8 +34,6 @@ export const drawLiveCells = (ctx: CanvasRenderingContext2D, grid: Uint32Array, 
   // Alive cells (with a small inset so cells look like a grid)
   const inset = cellSize >= 8 ? 1 : 0;
 
-  console.log('Drawing live cells', { cellSize, inset, grid });
-
   // set a few cells to alive for testing
   grid[indexOf(10, 10)] = 0x22d3ee;
   grid[indexOf(11, 10)] = 0x34d399;
@@ -56,4 +54,22 @@ export const drawLiveCells = (ctx: CanvasRenderingContext2D, grid: Uint32Array, 
       }
     }
   }
+}
+
+// ---- Controller functions ----
+
+export const cellFromEvent = (canvas: HTMLCanvasElement | null, clientX: number, clientY: number): PaintCell | null => {
+  if (!canvas) return null;
+
+  const rect = canvas.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) return null;
+
+  // Get the cell coordinates based on mouse position relative to the canvas
+  const x = Math.floor(((clientX - rect.left) / rect.width) * GRID_WIDTH);
+  const y = Math.floor(((clientY - rect.top) / rect.height) * GRID_HEIGHT);
+
+  // Check if the calculated cell coordinates are within the bounds of the grid
+  if (x < 0 || x >= GRID_WIDTH || y < 0 || y >= GRID_HEIGHT) return null;
+  
+  return { x, y };
 }

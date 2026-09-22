@@ -9,11 +9,12 @@ export default function App() {
     myColor, 
     status, 
     connectionState,
-    toggleConnection
+    toggleConnection,
+    paint
   } = useGameSocket();
 
   useEffect(() => {
-    console.log('Game state updated', { grid, tick, myColor, status, connectionState });
+    // console.log('Game state updated', { grid, tick, myColor, status, connectionState });
   }, [grid, tick, myColor, status, connectionState]);
 
   return (
@@ -28,7 +29,7 @@ export default function App() {
         </div>
       </header>
 
-      <GameBoard grid={grid} onPaint={() => {}} />
+      <GameBoard grid={grid} onPaint={paint} />
 
       <footer className="app-footer">
         <span>generation {tick}</span>

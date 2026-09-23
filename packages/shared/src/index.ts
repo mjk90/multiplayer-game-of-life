@@ -97,8 +97,8 @@ export function indexOf(x: number, y: number): number {
 /** Convert flat array index to grid (x, y) coordinates */
 export function coordinatesToIndex(i: number): { x: number, y: number } {
   return {
-      x: i % GRID_WIDTH,
-      y: Math.floor(i / GRID_WIDTH),
+    x: i % GRID_WIDTH,
+    y: Math.floor(i / GRID_WIDTH),
   }
 }
 
@@ -129,9 +129,9 @@ export function calculateDelta(prev: Uint32Array, next: Uint32Array): CellChange
   const changes: CellChange[] = [];
 
   for (let i = 0; i < GRID_SIZE; i++) {
-    if(prev[i] !== next[i]) {
+    if (prev[i] !== next[i]) {
       const { x, y } = coordinatesToIndex(i);
-      changes.push ({ x, y, color: next[i] });
+      changes.push({ x, y, color: next[i] });
     }
   }
 
@@ -190,4 +190,38 @@ export function cellsInLine(startX: number, startY: number, endX: number, endY: 
   }
 
   return cells;
+}
+
+// ---- Color helpers ----
+
+/**
+ * Packs 8-bit RGB channels into a single 24-bit integer
+ * @param r red value
+ * @param g green value
+ * @param b blue value
+ * @returns All 3 values encoded into a single 24 bit integer
+ */
+export function packColor(r: number, g: number, b: number): number {
+  // Each value uses only the lowest 8 bits so we mask the values to opnly those lowest 8 bits using "val & 0xff"
+  return ((r & 0xff) << 16) | // place red in bits 23-16
+    ((g & 0xff) << 8) |       // place green in bits 15-8
+    (b & 0xff);               // place blue in bits 7-0
+}
+
+/**
+ * Unpack a 24-bit color integer into its RGB channels
+ * The color is packed like this [ red ][ green ][ blue ] so we can access each color channel like this: 
+ * - Red: (color >> 16) & 0xff - multiply by 65536 to isolate the red channel value, then bitwise AND with 0xff to keep only the last 8 bits (the red channel value).
+ * - Green: (color >> 8) & 0xff - multiply by 256 to isolate the green channel value, then bitwise AND with 0xff to keep only the last 8 bits (the green channel value).
+ * - Blue: color & 0xff - bitwise AND with 0xff to keep only the last 8 bits (the blue channel value).
+ * >>
+ * @param color The packed color integer.
+ * @returns An object containing the red, green, and blue components.
+ */
+export function unpackColor(color: number): { r: number; g: number; b: number } {
+  return {
+    r: (color >> 16) & 0xff,
+    g: (color >> 8) & 0xff,
+    b: color & 0xff,
+  };
 }

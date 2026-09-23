@@ -25,6 +25,7 @@ const status = (game: Game, clientCount: number): StatusPacket => ({
 
 export function startServer(port = 3001): Promise<GameServer> {
   const httpServer = createServer();
+  // TODO: Update CORS for prod to allow frontend to connect only
   const corsOptions = process.env.NODE_ENV === 'PROD' ? undefined : { origin: '*' };
   const io = new SocketIoServer(httpServer, { cors: corsOptions });
   const game = new Game();

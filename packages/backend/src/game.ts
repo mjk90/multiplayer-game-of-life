@@ -86,8 +86,7 @@ export class Game {
         // Apply rules based on the state of the cell and its neighbors
         if (cell !== DEAD) {
           // if cell is alive and has 2 or 3 live neighbors, no change needed. If it does not not have 2 or 3 live neighbors, it dies
-          // next[i] = neighbors === 2 || neighbors === 3 ? cell : DEAD;
-          next [i] = cell;
+          next[i] = neighbors === 2 || neighbors === 3 ? cell : DEAD;
         } else if (neighbors === 3) {
           // if cell is dead but has 3 live neighbors, it comes back to life (TODO: with the average color of the neighbors)
           next[i] = PALETTE[0];

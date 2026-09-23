@@ -77,8 +77,8 @@ export function startServer(port = 3001): Promise<GameServer> {
     // Register paint event sent from clients. This is how users interact with the board
     socket.on(EVENTS.paint, (payload: PaintPacket) => {
       const cells = payload?.cells;
-      console.log("paint event", { cells })
       if (!Array.isArray(cells)) return;
+
       for (const cell of cells) {
         const { x, y } = cell;
 
@@ -91,6 +91,15 @@ export function startServer(port = 3001): Promise<GameServer> {
         }
 
         game.queuePaint(x, y, color);
+      }
+    });
+
+    socket.on('disconnect', () => {
+      // Unregister the disconnecting user's color
+      const c = socketColors.get(socket.id);
+      if (c !== undefined) {
+        usedColors.delete(c);
+        socketColors.delete(socket.id);
       }
     });
   });

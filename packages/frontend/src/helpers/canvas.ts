@@ -1,4 +1,4 @@
-import { DEAD, GRID_HEIGHT, GRID_WIDTH, indexOf, PaintCell } from "@life/shared";
+import { colorToCss, DEAD, GRID_HEIGHT, GRID_WIDTH, indexOf, PaintCell } from "@life/shared";
 
 export const COLOR_BG = '#0f172a';
 
@@ -38,11 +38,7 @@ export const drawLiveCells = (ctx: CanvasRenderingContext2D, grid: Uint32Array, 
     for (let x = 0; x < GRID_WIDTH; x++) {
       const color = grid[indexOf(x, y)];
       if (color !== DEAD) {
-        // ctx.fillStyle = colorToCss(color);
-        const r = 255;
-        const g = 255;
-        const b = 255;
-        ctx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+        ctx.fillStyle = colorToCss(color);
         ctx.fillRect(x * cellSize + inset, y * cellSize + inset, cellSize - inset * 2, cellSize - inset * 2);
       }
     }

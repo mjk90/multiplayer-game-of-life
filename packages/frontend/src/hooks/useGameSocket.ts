@@ -1,4 +1,4 @@
-import { EVENTS, GameSnapshot, GameTickPacket, GRID_SIZE, GRID_WIDTH, indexOf, PaintPacket, StatusPacket } from '@life/shared';
+import { EVENTS, GameSnapshot, GameTickPacket, GRID_SIZE, indexOf, PaintPacket, StatusPacket } from '@life/shared';
 import { useEffect, useRef, useState } from 'react';
 
 import { io, Socket } from 'socket.io-client';

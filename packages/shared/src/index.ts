@@ -51,6 +51,17 @@ export interface StatusPacket {
   online: number;
 }
 
+/** A single cell to paint (the server applies the sender's color so we don't need to send too much data). */
+export interface PaintCell {
+  x: number;
+  y: number;
+}
+
+/** A batch of paint intents sent from a client. */
+export interface PaintPacket {
+  cells: PaintCell[];
+}
+
 // ---- Cell Colors ----
 export const PALETTE = [
   0x22d3ee, // cyan
@@ -83,6 +94,14 @@ export function indexOf(x: number, y: number): number {
   return y * GRID_WIDTH + x;
 }
 
+/** Convert flat array index to grid (x, y) coordinates */
+export function coordinatesToIndex(i: number): { x: number, y: number } {
+  return {
+      x: i % GRID_WIDTH,
+      y: Math.floor(i / GRID_WIDTH),
+  }
+}
+
 /** Set a single cell's color (0 = dead). */
 export function setCell(grid: Uint32Array, x: number, y: number, color: number): void {
   grid[indexOf(x, y)] = color;
@@ -103,4 +122,72 @@ export function wrapY(y: number): number {
 /** Whether the given coordinates are inside the board. */
 export function inBounds(x: number, y: number): boolean {
   return x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT;
+}
+
+/** Get all changed cells with their x, y and color values */
+export function calculateDelta(prev: Uint32Array, next: Uint32Array): CellChange[] {
+  const changes: CellChange[] = [];
+
+  for (let i = 0; i < GRID_SIZE; i++) {
+    if(prev[i] !== next[i]) {
+      const { x, y } = coordinatesToIndex(i);
+      changes.push ({ x, y, color: next[i] });
+    }
+  }
+
+  return changes;
+}
+
+/**
+ * Calculates which cells are intersected by a line between 2 points cheaply (only integer operations)
+ * Uses Bresenham's algorithm: https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm
+ * @param startX starting point x
+ * @param startY starting point y 
+ * @param endX ending point x
+ * @param endY ending point y 
+ * @returns array of cells with their x and y co-ordinates
+ */
+export function cellsInLine(startX: number, startY: number, endX: number, endY: number): PaintCell[] {
+  const cells: PaintCell[] = [];
+
+  // Get absolute diff (so we can handle negative values as well)
+  const diffX = Math.abs(endX - startX);
+  const diffY = Math.abs(endY - startY);
+
+  // Get the step direction
+  const stepX = startX < endX ? 1 : -1;
+  const stepY = startY < endY ? 1 : -1;
+
+  let x = startX;
+  let y = startY;
+
+  // Keep track of the drift between the exact center of the line and the center of the current cell. This allows us to correct when the drift gets too big
+  // Horizontal movement subtracts from this and vertical movement will add to it. We use it to "steer" the value toward the goal
+  let drift = diffX - diffY;
+
+  while (true) {
+    cells.push({ x, y });
+
+    // stop when destination is reached
+    if (x === endX && y === endY) {
+      break;
+    }
+
+    // multiply by 2 so we only need to do integer calculations
+    const d2 = drift * 2;
+
+    // Is current drift small enough that we can step forward horizontally?
+    if (d2 >= -diffY) {
+      drift -= diffY; // adjust drift based on the horizontal move
+      x += stepX; // move in direction of step
+    }
+
+    // Is current drift small enough that we can step forward vertically?
+    if (d2 <= diffX) {
+      drift += diffX; // adjust drift based on the vertical move
+      y += stepY; // move in direction of step
+    }
+  }
+
+  return cells;
 }

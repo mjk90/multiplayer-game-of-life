@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { ConnectionState, useGameSocket } from './hooks/useGameSocket';
+import { GameBoard } from './components/GameBoard';
 
 export default function App() {
   const {
@@ -8,11 +9,12 @@ export default function App() {
     myColor, 
     status, 
     connectionState,
-    toggleConnection
+    toggleConnection,
+    paint
   } = useGameSocket();
 
   useEffect(() => {
-    console.log('Game state updated', { grid, tick, myColor, status, connectionState });
+    // console.log('Game state updated', { grid, tick, myColor, status, connectionState });
   }, [grid, tick, myColor, status, connectionState]);
 
   return (
@@ -26,6 +28,8 @@ export default function App() {
           </span>
         </div>
       </header>
+
+      <GameBoard grid={grid} onPaint={paint} />
 
       <footer className="app-footer">
         <span>generation {tick}</span>

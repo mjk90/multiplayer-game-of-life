@@ -1,4 +1,4 @@
-import { CellChange, createEmptyGrid, DEAD, GRID_HEIGHT, GRID_WIDTH, indexOf, PALETTE, wrapX, wrapY } from "@life/shared";
+import { calculateDelta, CellChange, createEmptyGrid, DEAD, GRID_HEIGHT, GRID_WIDTH, indexOf, PALETTE, wrapX, wrapY } from "@life/shared";
 
 // default tick interval is 25ms (40 generations per second) if not set in env
 export const TICK_INTERVAL_MS = process.env.TICK_INTERVAL_MS ? parseInt(process.env.TICK_INTERVAL_MS) : 25;
@@ -101,12 +101,23 @@ export class Game {
   }
 
   runTick(): TickResult {
+    // If there are new paints to apply, take a snapshot of the array before applying them. This way we can include them in the delta even when they form a still life shape.
+    // If we don't do this, the still life shapes don't appear as diffs and get lost.
+    const prev = this.pendingPaints.size > 0 ? 
+      this.current.slice() : 
+      this.current;
+      
     // Apply pending updates from users, compute next grid generation based on rules and update the board
     this.applyPendingPaints();
     this.next = this.computeNextGeneration(this.current);
+    
+    // Get changes from the previous state
+    const changes = calculateDelta(prev, this.next);
+    
     this.current = this.next;
     this.tick++;
-    return { tick: this.tick, changes: [] }; // TODO: compute deltas (only the cells that changed) to send to clients
+
+    return { tick: this.tick, changes };
   }
 
   private scheduleNextTick(): void {

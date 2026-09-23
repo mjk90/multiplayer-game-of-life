@@ -225,3 +225,13 @@ export function unpackColor(color: number): { r: number; g: number; b: number } 
     b: color & 0xff,
   };
 }
+
+/**
+ * Return a CSS color string from a packed color
+ * @param color packed color integer
+ * @returns CSS usable rgb() string
+ */
+export function colorToCss(color: number): string {
+  const { r, g, b } = unpackColor(color);
+  return `rgb(${r}, ${g}, ${b})`;
+}

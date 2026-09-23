@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
-import { PaintPacket, PaintCell, GRID_WIDTH, GRID_HEIGHT, indexOf } from '@life/shared';
-import { calculateGridSizes, cellFromEvent, cellsInLine, drawBackground, drawLiveCells } from '../helpers/canvas';
+import { PaintPacket, PaintCell, GRID_WIDTH, GRID_HEIGHT, indexOf, cellsInLine } from '@life/shared';
+import { calculateGridSizes, cellFromEvent, drawBackground, drawLiveCells } from '../helpers/canvas';
 
 interface GameBoardProps {
   grid: Uint32Array;

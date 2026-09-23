@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
 import { PaintPacket, PaintCell, GRID_WIDTH, GRID_HEIGHT, indexOf } from '@life/shared';
-import { calculateGridSizes, cellFromEvent, drawBackground, drawLiveCells } from '../helpers/canvas';
+import { calculateGridSizes, cellFromEvent, cellsInLine, drawBackground, drawLiveCells } from '../helpers/canvas';
 
 interface GameBoardProps {
   grid: Uint32Array;
@@ -57,10 +57,54 @@ export function GameBoard({ grid, onPaint }: GameBoardProps) {
     visitedRef.current = new Set([indexOf(cell.x, cell.y)]);
     lastCellRef.current = cell;
 
+    // Register the pointer capture event so we don't lose it if the user moves their cursor outside of the canvas
     e.currentTarget.setPointerCapture(e.pointerId);
 
     // send the clicked cell to onPaint, to be sent to the WS server as a paint event
     onPaint({ cells: [cell] })
+  }
+
+  function handlePointerUp(e: ReactPointerEvent<HTMLCanvasElement>) {
+    e.preventDefault();
+    if (!paintingRef.current) return;
+
+    // End the user's click and drag action by setting our refs to empty
+    paintingRef.current = false;
+    visitedRef.current = null;
+    lastCellRef.current = null;
+
+    // Release the pointer capture event
+    if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    }
+  }
+
+  function handlePointerMove(e: ReactPointerEvent<HTMLCanvasElement>) {
+    if (!paintingRef.current || !visitedRef.current || !lastCellRef.current) return;
+
+    const current = cellFromEvent(e.currentTarget, e.clientX, e.clientY);
+    // Make sure we have a cell at the mouse position
+    if (!current) return;
+    // If the cell is one we already handled, then no need to continue
+    if (current.x === lastCellRef.current.x && current.y === lastCellRef.current.y) return;
+
+    // Get all cells between last captured cell and the cell the pointer is currently at
+    const line = cellsInLine(lastCellRef.current.x, lastCellRef.current.y, current.x, current.y);
+    
+    // Any we haven't already captured are added to a batch and sent via WS
+    const batch: PaintCell[] = [];
+    for (const cell of line) {
+      const key = indexOf(cell.x, cell.y);
+      if (visitedRef.current.has(key)) continue;
+      visitedRef.current.add(key);
+      batch.push(cell);
+    }
+
+    lastCellRef.current = current;
+
+    if (batch.length > 0) {
+      onPaint({ cells: batch });
+    }
   }
 
   return (
@@ -68,6 +112,9 @@ export function GameBoard({ grid, onPaint }: GameBoardProps) {
       <canvas
         ref={canvasRef}
         onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onPointerMove={handlePointerMove}
       />
     </div>
   );

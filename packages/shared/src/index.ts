@@ -94,6 +94,14 @@ export function indexOf(x: number, y: number): number {
   return y * GRID_WIDTH + x;
 }
 
+/** Convert flat array index to grid (x, y) coordinates */
+export function coordinatesToIndex(i: number): { x: number, y: number } {
+  return {
+      x: i % GRID_WIDTH,
+      y: Math.floor(i / GRID_WIDTH),
+  }
+}
+
 /** Set a single cell's color (0 = dead). */
 export function setCell(grid: Uint32Array, x: number, y: number, color: number): void {
   grid[indexOf(x, y)] = color;
@@ -114,6 +122,20 @@ export function wrapY(y: number): number {
 /** Whether the given coordinates are inside the board. */
 export function inBounds(x: number, y: number): boolean {
   return x >= 0 && x < GRID_WIDTH && y >= 0 && y < GRID_HEIGHT;
+}
+
+/** Get all changed cells with their x, y and color values */
+export function calculateDelta(prev: Uint32Array, next: Uint32Array): CellChange[] {
+  const changes: CellChange[] = [];
+
+  for (let i = 0; i < GRID_SIZE; i++) {
+    if(prev[i] !== next[i]) {
+      const { x, y } = coordinatesToIndex(i);
+      changes.push ({ x, y, color: next[i] });
+    }
+  }
+
+  return changes;
 }
 
 /**

@@ -46,7 +46,6 @@ export function useGameSocket() {
 
     socket.on(EVENTS.delta, (packet: GameTickPacket) => {
       if (packet.tick <= lastTickRef.current) return; // avoid stale or duplicate deltas
-      console.log("delta", {packet})
 
       lastTickRef.current = packet.tick;
       setTick(packet.tick);

@@ -34,13 +34,6 @@ export const drawLiveCells = (ctx: CanvasRenderingContext2D, grid: Uint32Array, 
   // Alive cells (with a small inset so cells look like a grid)
   const inset = cellSize >= 8 ? 1 : 0;
 
-  // set a few cells to alive for testing
-  grid[indexOf(10, 10)] = 0x22d3ee;
-  grid[indexOf(11, 10)] = 0x34d399;
-  grid[indexOf(12, 10)] = 0xfacc15;
-  grid[indexOf(13, 10)] = 0xfb923c;
-  grid[indexOf(14, 10)] = 0xef4444;
-
   for (let y = 0; y < GRID_HEIGHT; y++) {
     for (let x = 0; x < GRID_WIDTH; x++) {
       const color = grid[indexOf(x, y)];

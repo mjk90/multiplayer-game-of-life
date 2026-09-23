@@ -4,6 +4,7 @@ import {
   DEAD,
   GRID_HEIGHT,
   GRID_WIDTH,
+  cellsInLine,
   createEmptyGrid,
   inBounds,
   indexOf,
@@ -52,5 +53,101 @@ describe('grid helpers', () => {
     expect(inBounds(0, -1)).toBe(false);
     expect(inBounds(GRID_WIDTH, 0)).toBe(false);
     expect(inBounds(0, GRID_HEIGHT)).toBe(false);
+  });
+});
+
+describe('cellsInLine', () => {
+  it('returns a single cell for a zero-length line', () => {
+    expect(cellsInLine(3, 3, 3, 3)).toEqual([{ x: 3, y: 3 }]);
+  });
+
+  it('traces a horizontal line left to right', () => {
+    expect(cellsInLine(0, 0, 4, 0)).toEqual([
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 2, y: 0 },
+      { x: 3, y: 0 },
+      { x: 4, y: 0 },
+    ]);
+  });
+
+  it('traces a horizontal line right to left', () => {
+    expect(cellsInLine(4, 0, 0, 0)).toEqual([
+      { x: 4, y: 0 },
+      { x: 3, y: 0 },
+      { x: 2, y: 0 },
+      { x: 1, y: 0 },
+      { x: 0, y: 0 },
+    ]);
+  });
+
+  it('traces a vertical line top to bottom', () => {
+    expect(cellsInLine(2, 0, 2, 3)).toEqual([
+      { x: 2, y: 0 },
+      { x: 2, y: 1 },
+      { x: 2, y: 2 },
+      { x: 2, y: 3 },
+    ]);
+  });
+
+  it('traces a perfect diagonal', () => {
+    expect(cellsInLine(0, 0, 4, 4)).toEqual([
+      { x: 0, y: 0 },
+      { x: 1, y: 1 },
+      { x: 2, y: 2 },
+      { x: 3, y: 3 },
+      { x: 4, y: 4 },
+    ]);
+  });
+
+  it('traces a shallow diagonal (more horizontal than vertical)', () => {
+    expect(cellsInLine(0, 0, 5, 2)).toEqual([
+      { x: 0, y: 0 },
+      { x: 1, y: 0 },
+      { x: 2, y: 1 },
+      { x: 3, y: 1 },
+      { x: 4, y: 2 },
+      { x: 5, y: 2 },
+    ]);
+  });
+
+  it('traces a steep diagonal (more vertical than horizontal)', () => {
+    expect(cellsInLine(0, 0, 2, 5)).toEqual([
+      { x: 0, y: 0 },
+      { x: 0, y: 1 },
+      { x: 1, y: 2 },
+      { x: 1, y: 3 },
+      { x: 2, y: 4 },
+      { x: 2, y: 5 },
+    ]);
+  });
+
+  it('handles negative slope in both axes', () => {
+    expect(cellsInLine(5, 5, 0, 0)).toEqual([
+      { x: 5, y: 5 },
+      { x: 4, y: 4 },
+      { x: 3, y: 3 },
+      { x: 2, y: 2 },
+      { x: 1, y: 1 },
+      { x: 0, y: 0 },
+    ]);
+  });
+
+  it('starts and ends at the given endpoints', () => {
+    const cells = cellsInLine(10, 20, 30, 35);
+    expect(cells[0]).toEqual({ x: 10, y: 20 });
+    expect(cells[cells.length - 1]).toEqual({ x: 30, y: 35 });
+  });
+
+  it('never steps more than one cell per axis between consecutive cells', () => {
+    const cells = cellsInLine(-5, -3, 8, 12);
+    expect(cells.length).toBeGreaterThan(0);
+
+    for (let i = 1; i < cells.length; i++) {
+      const prev = cells[i - 1];
+      const curr = cells[i];
+      expect(Math.abs(curr.x - prev.x)).toBeLessThanOrEqual(1);
+      expect(Math.abs(curr.y - prev.y)).toBeLessThanOrEqual(1);
+    }
   });
 });

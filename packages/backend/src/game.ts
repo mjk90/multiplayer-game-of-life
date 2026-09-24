@@ -1,4 +1,4 @@
-import { calculateDelta, CellChange, createEmptyGrid, DEAD, GRID_HEIGHT, GRID_WIDTH, indexOf, PALETTE, wrapX, wrapY } from "@life/shared";
+import { calculateDelta, CellChange, createEmptyGrid, DEAD, GRID_HEIGHT, GRID_WIDTH, indexOf, packColor, PALETTE, unpackColor, wrapX, wrapY } from "@life/shared";
 
 // default tick interval is 25ms (40 generations per second) if not set in env
 export const TICK_INTERVAL_MS = process.env.TICK_INTERVAL_MS ? parseInt(process.env.TICK_INTERVAL_MS) : 25;
@@ -70,15 +70,20 @@ export class Game {
         const i = indexOf(x, y);
         const cell = grid[i];
 
-        let neighbors = 0;
+        let r = 0, g = 0, b = 0, neighbors = 0;
 
         // loop through all 8 neighbours of the cell
         for (let ny = -1; ny <= 1; ny++) {
           for (let nx = -1; nx <= 1; nx++) {
             if (nx === 0 && ny === 0) continue; // skip current cell
+
             const color = grid[indexOf(wrapX(x + nx), wrapY(y + ny))];
             if (color !== DEAD) {
-              neighbors += 1;
+              const { r: red, g: green, b: blue } = unpackColor(color);
+              neighbors ++;
+              r += red;
+              g += green;
+              b += blue;
             }
           }
         }
@@ -88,8 +93,8 @@ export class Game {
           // if cell is alive and has 2 or 3 live neighbors, no change needed. If it does not not have 2 or 3 live neighbors, it dies
           next[i] = neighbors === 2 || neighbors === 3 ? cell : DEAD;
         } else if (neighbors === 3) {
-          // if cell is dead but has 3 live neighbors, it comes back to life (TODO: with the average color of the neighbors)
-          next[i] = PALETTE[0];
+          // if cell is dead but has 3 live neighbors, it comes back to life with average color of the live neighbors
+          next[i] = packColor(Math.round(r / 3), Math.round(g / 3), Math.round(b / 3));
         } else {
           // if cell is dead and has any other number of neighbors, it stays dead
           next[i] = DEAD;

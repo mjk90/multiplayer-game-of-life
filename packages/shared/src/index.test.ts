@@ -8,7 +8,9 @@ import {
   createEmptyGrid,
   inBounds,
   indexOf,
+  packColor,
   setCell,
+  unpackColor,
   wrapX,
   wrapY,
 } from './index';
@@ -148,6 +150,57 @@ describe('cellsInLine', () => {
       const curr = cells[i];
       expect(Math.abs(curr.x - prev.x)).toBeLessThanOrEqual(1);
       expect(Math.abs(curr.y - prev.y)).toBeLessThanOrEqual(1);
+    }
+  });
+});
+
+describe('color helpers', () => {
+  it('packs 8-bit RGB channels into a 24-bit integer', () => {
+    expect(packColor(255, 0, 0)).toBe(0xff0000);
+    expect(packColor(0, 255, 0)).toBe(0x00ff00);
+    expect(packColor(0, 0, 255)).toBe(0x0000ff);
+  });
+
+  it('packs black and white correctly', () => {
+    expect(packColor(0, 0, 0)).toBe(0x000000);
+    expect(packColor(255, 255, 255)).toBe(0xffffff);
+  });
+
+  it('packs an arbitrary color into its hex representation', () => {
+    expect(packColor(0x22, 0xd3, 0xee)).toBe(0x22d3ee);
+    expect(packColor(0x12, 0x34, 0x56)).toBe(0x123456);
+  });
+
+  it('masks each channel to its lowest 8 bits', () => {
+    expect(packColor(256, 257, 258)).toBe(0x000102);
+    expect(packColor(0x123, 0x234, 0x345)).toBe(0x233445);
+  });
+
+  it('unpacks a 24-bit integer into its RGB channels', () => {
+    expect(unpackColor(0xff0000)).toEqual({ r: 255, g: 0, b: 0 });
+    expect(unpackColor(0x00ff00)).toEqual({ r: 0, g: 255, b: 0 });
+    expect(unpackColor(0x0000ff)).toEqual({ r: 0, g: 0, b: 255 });
+  });
+
+  it('unpacks an arbitrary color', () => {
+    expect(unpackColor(0x123456)).toEqual({ r: 0x12, g: 0x34, b: 0x56 });
+    expect(unpackColor(0x22d3ee)).toEqual({ r: 0x22, g: 0xd3, b: 0xee });
+  });
+
+  it('ignores bits above the 24-bit color when unpacking', () => {
+    expect(unpackColor(0x01234567)).toEqual({ r: 0x23, g: 0x45, b: 0x67 });
+  });
+
+  it('pack and unpack are inverses of each other', () => {
+    const cases = [
+      { r: 0, g: 0, b: 0 },
+      { r: 255, g: 255, b: 255 },
+      { r: 0x22, g: 0xd3, b: 0xee },
+      { r: 0x12, g: 0x34, b: 0x56 },
+    ];
+
+    for (const { r, g, b } of cases) {
+      expect(unpackColor(packColor(r, g, b))).toEqual({ r, g, b });
     }
   });
 });

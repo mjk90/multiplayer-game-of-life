@@ -1,7 +1,7 @@
 import { createServer, Server as HttpServer } from 'node:http';
 import { Server as SocketIoServer } from 'socket.io';
 import { Game } from './game';
-import { EVENTS, GameSnapshot, GameTickPacket, GRID_HEIGHT, GRID_WIDTH, inBounds, packColor, PaintPacket, PALETTE, StatusPacket } from '@life/shared';
+import { EVENTS, GameSnapshot, GameTickPacket, GRID_HEIGHT, GRID_WIDTH, inBounds, packColor, PaintPacket, PALETTE, PATTERNS, PlacePatternPacket, StatusPacket, wrapX, wrapY } from '@life/shared';
 
 export interface GameServer {
   io: SocketIoServer;
@@ -29,7 +29,7 @@ const getAvailableColor = (usedColors: Set<number>): number => {
   if (free !== undefined) {
     return free;
   }
-  
+
   // More clients than palette entries: generate a random bright color.
   let color = 0;
   do {
@@ -91,6 +91,30 @@ export function startServer(port = 3001): Promise<GameServer> {
         }
 
         game.queuePaint(x, y, color);
+      }
+    });
+
+    socket.on(EVENTS.clear, () => {
+      // Clear game state and emit new empty snapshot to all clients
+      game.clear();
+      for (const s of io.sockets.sockets.values()) {
+        const color = socketColors.get(s.id) ?? 0;
+        s.emit(EVENTS.snapshot, snapshot(game, color));
+      }
+      io.emit(EVENTS.status, status(game, io.engine.clientsCount));
+    });
+
+    socket.on(EVENTS.placePattern, (payload: PlacePatternPacket) => {
+      // Validate that this is a supported pattern name
+      const pattern = PATTERNS[payload?.name];
+      if (!pattern) return;
+
+      // Get a random x and y to place the pattern
+      const originX = Math.floor(Math.random() * GRID_WIDTH);
+      const originY = Math.floor(Math.random() * GRID_HEIGHT);
+      
+      for (const cell of pattern) {
+        game.queuePaint(wrapX(originX + cell.x), wrapY(originY + cell.y), color);
       }
     });
 

@@ -1,6 +1,7 @@
 import { ConnectionState, useGameSocket } from './hooks/useGameSocket';
 import { GameBoard } from './components/GameBoard';
 import { colorToCss } from '@life/shared';
+import { Controls } from './components/Controls';
 
 export default function App() {
   const {
@@ -10,7 +11,9 @@ export default function App() {
     status, 
     connectionState,
     toggleConnection,
-    paint
+    paint,
+    clear,
+    placePattern
   } = useGameSocket();
 
   return (
@@ -29,9 +32,13 @@ export default function App() {
           </span>
         </div>
       </header>
-
+      
       <GameBoard grid={grid} onPaint={paint} />
 
+      <div className="controls-container flex flex-row justify-between">
+        <Controls myColor={myColor} onClear={clear} onPlacePattern={placePattern} />
+      </div>
+      
       <footer className="app-footer">
         <span>generation {tick}</span>
         <span>{status.online} online</span>

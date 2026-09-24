@@ -62,6 +62,11 @@ export interface PaintPacket {
   cells: PaintCell[];
 }
 
+/** A pattern-placement request. */
+export interface PlacePatternPacket {
+  name: PatternName;
+}
+
 // ---- Cell Colors ----
 export const PALETTE = [
   0x22d3ee, // cyan
@@ -235,3 +240,87 @@ export function colorToCss(color: number): string {
   const { r, g, b } = unpackColor(color);
   return `rgb(${r}, ${g}, ${b})`;
 }
+
+// ---- Patterns ----
+
+export type PatternName = 'beehive' | 'blinker' | 'mwss' | 'pulsar';
+
+/** Predefined patterns as relative cell coordinates (fixed orientation). */
+export const PATTERNS: Record<PatternName, PaintCell[]> = {
+  beehive: [
+    { x: 1, y: 0 },
+    { x: 2, y: 0 },
+    { x: 0, y: 1 },
+    { x: 3, y: 1 },
+    { x: 1, y: 2 },
+    { x: 2, y: 2 },
+  ],
+  blinker: [
+    { x: 0, y: 0 },
+    { x: 1, y: 0 },
+    { x: 2, y: 0 },
+  ],
+  mwss: [
+    { x: 2, y: 0 },
+    { x: 3, y: 0 },
+    { x: 4, y: 0 },
+    { x: 0, y: 1 },
+    { x: 5, y: 1 },
+    { x: 0, y: 2 },
+    { x: 5, y: 2 },
+    { x: 1, y: 3 },
+    { x: 2, y: 3 },
+    { x: 3, y: 3 },
+    { x: 4, y: 3 },
+  ],
+  pulsar: [
+    { x: 2, y: 0 },
+    { x: 3, y: 0 },
+    { x: 4, y: 0 },
+    { x: 8, y: 0 },
+    { x: 9, y: 0 },
+    { x: 10, y: 0 },
+    { x: 0, y: 2 },
+    { x: 5, y: 2 },
+    { x: 7, y: 2 },
+    { x: 12, y: 2 },
+    { x: 0, y: 3 },
+    { x: 5, y: 3 },
+    { x: 7, y: 3 },
+    { x: 12, y: 3 },
+    { x: 0, y: 4 },
+    { x: 5, y: 4 },
+    { x: 7, y: 4 },
+    { x: 12, y: 4 },
+    { x: 2, y: 5 },
+    { x: 3, y: 5 },
+    { x: 4, y: 5 },
+    { x: 8, y: 5 },
+    { x: 9, y: 5 },
+    { x: 10, y: 5 },
+    { x: 2, y: 7 },
+    { x: 3, y: 7 },
+    { x: 4, y: 7 },
+    { x: 8, y: 7 },
+    { x: 9, y: 7 },
+    { x: 10, y: 7 },
+    { x: 0, y: 8 },
+    { x: 5, y: 8 },
+    { x: 7, y: 8 },
+    { x: 12, y: 8 },
+    { x: 0, y: 9 },
+    { x: 5, y: 9 },
+    { x: 7, y: 9 },
+    { x: 12, y: 9 },
+    { x: 0, y: 10 },
+    { x: 5, y: 10 },
+    { x: 7, y: 10 },
+    { x: 12, y: 10 },
+    { x: 2, y: 12 },
+    { x: 3, y: 12 },
+    { x: 4, y: 12 },
+    { x: 8, y: 12 },
+    { x: 9, y: 12 },
+    { x: 10, y: 12 },
+  ],
+};

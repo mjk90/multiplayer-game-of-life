@@ -16,6 +16,8 @@ export interface GameSocketApi {
   status: StatusPacket;
   connectionState: ConnectionState;
   toggleConnection: () => void;
+  clear: () => void;
+  placePattern: (name: string) => void;
 }
 
 export function useGameSocket() {
@@ -40,6 +42,7 @@ export function useGameSocket() {
       setGrid(Uint32Array.from(snap.cells));
       setTick(snap.tick);
       setMyColor(snap.clientColor);
+      lastTickRef.current = snap.tick;
     });
 
     socket.on(EVENTS.status, (status: StatusPacket) => setStatus({ running: status.running, online: status.online }));
@@ -68,6 +71,12 @@ export function useGameSocket() {
     socketRef.current?.emit(EVENTS.paint, paintPacket);
   };
 
+  const clear = () => socketRef.current?.emit(EVENTS.clear);
+
+  const placePattern = (name: string) => {
+    socketRef.current?.emit(EVENTS.placePattern, { name });
+  };
+
   const toggleConnection = () => {
     if (socketRef.current?.connected) {
       setConnectionState(ConnectionState.Disconnected);
@@ -78,5 +87,5 @@ export function useGameSocket() {
     }
   }
 
-  return { grid, tick, myColor, status, connectionState, toggleConnection, paint };
+  return { grid, tick, myColor, status, connectionState, toggleConnection, paint, clear, placePattern };
 }

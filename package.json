@@ -7,7 +7,7 @@
   ],
   "scripts": {
     "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev --workspace @life/backend\" \"npm run dev --workspace @life/frontend\"",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace @life/shared && npm run build --workspace @life/backend && npm run build --workspace @life/frontend",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {

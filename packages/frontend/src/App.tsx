@@ -36,7 +36,7 @@ export default function App() {
       <GameBoard grid={grid} onPaint={paint} />
 
       <div className="controls-container flex flex-row justify-between">
-        <Controls onClear={clear} onPlacePattern={placePattern} />
+        <Controls myColor={myColor} onClear={clear} onPlacePattern={placePattern} />
       </div>
       
       <footer className="app-footer">

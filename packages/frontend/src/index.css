@@ -28,6 +28,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 1rem;
 }
 
@@ -98,12 +99,13 @@ body {
   border-radius: 0.5rem;
   padding: 0.25rem 0.75rem;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
 .controls button:hover {
-  background: #374151;
-  border-color: #4b5563;
+  background: color-mix(in srgb, var(--player-color, #22d3ee) 25%, transparent);
+  border-color: color-mix(in srgb, var(--player-color, #22d3ee) 55%, transparent);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--player-color, #22d3ee) 55%, transparent);
 }
 
 .controls button:active {
@@ -132,4 +134,17 @@ body {
   justify-content: space-between;
   color: #9ca3af;
   font-size: 0.85rem;
+}
+
+@media (width <=640px) {
+  .controls-container {
+    bottom: 5em;
+  }
+
+  .controls {
+    align-content: flex-end;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-end;
+  }
 }

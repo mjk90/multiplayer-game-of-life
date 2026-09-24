@@ -16,6 +16,7 @@ body {
 .app {
   display: flex;
   flex-direction: column;
+  position: relative;
   min-height: 100vh;
   max-width: 960px;
   margin: 0 auto;
@@ -71,6 +72,17 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.25);
 }
 
+.controls-container {
+  position: fixed;
+  bottom: 1em;
+  left: 0;
+  display: flex;
+  width: 100%;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+}
+
 .controls {
   display: flex;
   gap: 0.5rem;
@@ -78,12 +90,13 @@ body {
 
 .controls button {
   font: inherit;
+  font-size: 0.75em;
   font-weight: 600;
   color: #e5e7eb;
   background: #1f2937;
   border: 1px solid #374151;
   border-radius: 0.5rem;
-  padding: 0.5rem 1rem;
+  padding: 0.25rem 0.75rem;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }

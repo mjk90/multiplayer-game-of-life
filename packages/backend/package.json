@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
+    "build": "tsc --noEmit && tsup",
     "start": "node dist/server.js",
     "test": "vitest run"
   },
@@ -16,6 +16,7 @@
   "devDependencies": {
     "@types/node": "^22.10.5",
     "socket.io-client": "^4.8.1",
+    "tsup": "^8.5.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"

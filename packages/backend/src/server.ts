@@ -94,6 +94,16 @@ export function startServer(port = 3001): Promise<GameServer> {
       }
     });
 
+    socket.on(EVENTS.clear, () => {
+      // Clear game state and emit new empty snapshot to all clients
+      game.clear();
+      for (const s of io.sockets.sockets.values()) {
+        const color = socketColors.get(s.id) ?? 0;
+        s.emit(EVENTS.snapshot, snapshot(game, color));
+      }
+      io.emit(EVENTS.status, status(game, io.engine.clientsCount));
+    });
+
     socket.on('disconnect', () => {
       // Unregister the disconnecting user's color
       const c = socketColors.get(socket.id);

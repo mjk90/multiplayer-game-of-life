@@ -42,6 +42,7 @@ export function useGameSocket() {
       setGrid(Uint32Array.from(snap.cells));
       setTick(snap.tick);
       setMyColor(snap.clientColor);
+      lastTickRef.current = snap.tick;
     });
 
     socket.on(EVENTS.status, (status: StatusPacket) => setStatus({ running: status.running, online: status.online }));

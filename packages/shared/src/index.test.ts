@@ -3,8 +3,13 @@ import { describe, expect, it } from 'vitest';
 import {
   DEAD,
   GRID_HEIGHT,
+  GRID_SIZE,
   GRID_WIDTH,
+  PATTERNS,
+  calculateDelta,
   cellsInLine,
+  colorToCss,
+  coordinatesToIndex,
   createEmptyGrid,
   inBounds,
   indexOf,
@@ -201,6 +206,78 @@ describe('color helpers', () => {
 
     for (const { r, g, b } of cases) {
       expect(unpackColor(packColor(r, g, b))).toEqual({ r, g, b });
+    }
+  });
+});
+
+describe('coordinatesToIndex', () => {
+  it('converts a flat index back to (x, y) coordinates', () => {
+    expect(coordinatesToIndex(0)).toEqual({ x: 0, y: 0 });
+    expect(coordinatesToIndex(GRID_WIDTH)).toEqual({ x: 0, y: 1 });
+    expect(coordinatesToIndex(GRID_WIDTH * 25 + 3)).toEqual({ x: 3, y: 25 });
+    expect(coordinatesToIndex(GRID_SIZE - 1)).toEqual({ x: GRID_WIDTH - 1, y: GRID_HEIGHT - 1 });
+  });
+
+  it('is the inverse of indexOf for every cell in the grid', () => {
+    for (let y = 0; y < GRID_HEIGHT; y++) {
+      for (let x = 0; x < GRID_WIDTH; x++) {
+        expect(coordinatesToIndex(indexOf(x, y))).toEqual({ x, y });
+      }
+    }
+  });
+});
+
+describe('calculateDelta', () => {
+  it('returns no changes when the boards are identical', () => {
+    const grid = createEmptyGrid();
+    setCell(grid, 1, 1, 0x123456);
+
+    expect(calculateDelta(grid, grid)).toEqual([]);
+  });
+
+  it('reports a born cell with its coordinates and color', () => {
+    const prev = createEmptyGrid();
+    const next = createEmptyGrid();
+    setCell(next, 2, 3, 0xabcdef);
+
+    expect(calculateDelta(prev, next)).toEqual([{ x: 2, y: 3, color: 0xabcdef }]);
+  });
+
+  it('reports a dead cell with color 0', () => {
+    const prev = createEmptyGrid();
+    setCell(prev, 4, 5, 0xffffff);
+    const next = createEmptyGrid();
+
+    expect(calculateDelta(prev, next)).toEqual([{ x: 4, y: 5, color: DEAD }]);
+  });
+});
+
+describe('colorToCss', () => {
+  it('formats packed colors as rgb() strings', () => {
+    expect(colorToCss(packColor(255, 0, 0))).toBe('rgb(255, 0, 0)');
+    expect(colorToCss(0x22d3ee)).toBe('rgb(34, 211, 238)');
+    expect(colorToCss(0)).toBe('rgb(0, 0, 0)');
+  });
+});
+
+describe('PATTERNS', () => {
+  it('defines the four expected pattern names', () => {
+    expect(Object.keys(PATTERNS).sort()).toEqual(['beehive', 'blinker', 'mwss', 'pulsar']);
+  });
+
+  it('contains only unique, in-bounds, non-negative cells', () => {
+    for (const [name, cells] of Object.entries(PATTERNS)) {
+      const seen = new Set<string>();
+
+      for (const { x, y } of cells) {
+        expect(x).toBeGreaterThanOrEqual(0);
+        expect(y).toBeGreaterThanOrEqual(0);
+        expect(inBounds(x, y)).toBe(true);
+
+        const key = `${x},${y}`;
+        expect(seen.has(key), `${name} has duplicate cell (${x}, ${y})`).toBe(false);
+        seen.add(key);
+      }
     }
   });
 });

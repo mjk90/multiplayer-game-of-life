@@ -51,6 +51,7 @@ export class Game {
   clear(): void {
     this.current = createEmptyGrid();
     this.tick = 0;
+    this.pendingPaints.clear();
   }
 
   private applyPendingPaints(): void {

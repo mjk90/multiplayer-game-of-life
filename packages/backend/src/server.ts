@@ -83,11 +83,11 @@ export function startServer(port = 3001): Promise<GameServer> {
         const { x, y } = cell;
 
         if (typeof x !== 'number' || typeof y !== 'number') {
-          return;
+          continue;
         }
 
         if (!inBounds(x, y)) {
-          return;
+          continue;
         }
 
         game.queuePaint(x, y, color);

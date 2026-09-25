@@ -26,7 +26,7 @@ export const calculateGridSizes = (container: HTMLElement, gridWidth: number) =>
 export const drawBackground = (ctx: CanvasRenderingContext2D, size: number, dpr: number) => {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.clearRect(0, 0, size, size);
-  ctx.fillStyle = '#0f172a';
+  ctx.fillStyle = COLOR_BG;
   ctx.fillRect(0, 0, size, size);
 }
 

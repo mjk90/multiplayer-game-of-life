@@ -3,8 +3,12 @@ import { describe, expect, it } from 'vitest';
 import {
   DEAD,
   GRID_HEIGHT,
+  GRID_SIZE,
   GRID_WIDTH,
+  PATTERNS,
+  calculateDelta,
   cellsInLine,
+  colorToCss,
   createEmptyGrid,
   inBounds,
   indexOf,
@@ -201,6 +205,61 @@ describe('color helpers', () => {
 
     for (const { r, g, b } of cases) {
       expect(unpackColor(packColor(r, g, b))).toEqual({ r, g, b });
+    }
+  });
+});
+
+describe('calculateDelta', () => {
+  it('returns no changes when the boards are identical', () => {
+    const grid = createEmptyGrid();
+    setCell(grid, 1, 1, 0x123456);
+
+    expect(calculateDelta(grid, grid)).toEqual([]);
+  });
+
+  it('reports a born cell with its coordinates and color', () => {
+    const prev = createEmptyGrid();
+    const next = createEmptyGrid();
+    setCell(next, 2, 3, 0xabcdef);
+
+    expect(calculateDelta(prev, next)).toEqual([{ i: 602, color: 0xabcdef }]);
+  });
+
+  it('reports a dead cell with color 0', () => {
+    const prev = createEmptyGrid();
+    setCell(prev, 4, 5, 0xffffff);
+    const next = createEmptyGrid();
+
+    expect(calculateDelta(prev, next)).toEqual([{ i: 1004, color: DEAD }]);
+  });
+});
+
+describe('colorToCss', () => {
+  it('formats packed colors as rgb() strings', () => {
+    expect(colorToCss(packColor(255, 0, 0))).toBe('rgb(255, 0, 0)');
+    expect(colorToCss(0x22d3ee)).toBe('rgb(34, 211, 238)');
+    expect(colorToCss(0)).toBe('rgb(0, 0, 0)');
+  });
+});
+
+describe('PATTERNS', () => {
+  it('defines the four expected pattern names', () => {
+    expect(Object.keys(PATTERNS).sort()).toEqual(['beehive', 'blinker', 'mwss', 'pulsar']);
+  });
+
+  it('contains only unique, in-bounds, non-negative cells', () => {
+    for (const [name, cells] of Object.entries(PATTERNS)) {
+      const seen = new Set<string>();
+
+      for (const { x, y } of cells) {
+        expect(x).toBeGreaterThanOrEqual(0);
+        expect(y).toBeGreaterThanOrEqual(0);
+        expect(inBounds(x, y)).toBe(true);
+
+        const key = `${x},${y}`;
+        expect(seen.has(key), `${name} has duplicate cell (${x}, ${y})`).toBe(false);
+        seen.add(key);
+      }
     }
   });
 });

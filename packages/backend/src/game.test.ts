@@ -84,6 +84,21 @@ describe('Game', () => {
     expect(result.changes.every((change) => change.color === CYAN)).toBe(true);
   });
 
+  it('emits births and deaths in the delta for a blinker tick', () => {
+    const game = new Game();
+    setCell(game.current, 10, 10, CYAN);
+    setCell(game.current, 11, 10, CYAN);
+    setCell(game.current, 12, 10, CYAN);
+
+    const result = game.runTick();
+
+    const births = result.changes.filter((change) => change.color !== DEAD).map((change) => [change.i]);
+    const deaths = result.changes.filter((change) => change.color === DEAD).map((change) => [change.i]);
+
+    expect(births).toEqual([[1811], [2211]]);
+    expect(deaths).toEqual([[2010], [2012]]);
+  });
+
   it('recolors an alive cell via a queued paint', () => {
     const game = new Game();
     setCell(game.current, 10, 10, CYAN);
@@ -110,6 +125,23 @@ describe('Game', () => {
 
     expect(game.tick).toBe(0);
     expect(aliveCoords(game.current)).toEqual([]);
+  });
+
+  it('clears queued paints so they do not apply on the next tick', () => {
+    const game = new Game();
+    setCell(game.current, 3, 3, CYAN);
+    game.queuePaint(4, 4, CYAN);
+
+    game.clear();
+    game.runTick();
+
+    expect(game.tick).toBe(1);
+    expect(aliveCoords(game.current)).toEqual([]);
+  });
+
+  it('reports isRunning false before start', () => {
+    const game = new Game();
+    expect(game.isRunning).toBe(false);
   });
 });
 
@@ -176,6 +208,42 @@ describe('computeNextGeneration (core game functionality)', () => {
     ]);
   });
 
+  it('wraps around the vertical toroidal edges', () => {
+    const game = new Game();
+    const wrapBlinker = gridFrom([
+      [10, GRID_HEIGHT - 1],
+      [10, 0],
+      [10, 1],
+    ]);
+    expect(aliveCoords(game.computeNextGeneration(wrapBlinker))).toEqual([
+      [9, 0],
+      [10, 0],
+      [11, 0],
+    ]);
+  });
+
+  it('kills a cell with fewer than two live neighbors', () => {
+    const game = new Game();
+    setCell(game.current, 5, 5, CYAN);
+
+    const next = game.computeNextGeneration(game.current);
+
+    expect(next[indexOf(5, 5)]).toBe(DEAD);
+  });
+
+  it('kills a cell with more than three live neighbors', () => {
+    const game = new Game();
+    setCell(game.current, 10, 10, CYAN);
+    setCell(game.current, 9, 10, CYAN);
+    setCell(game.current, 11, 10, CYAN);
+    setCell(game.current, 10, 9, CYAN);
+    setCell(game.current, 10, 11, CYAN);
+
+    const next = game.computeNextGeneration(game.current);
+
+    expect(next[indexOf(10, 10)]).toBe(DEAD);
+  });
+
   it('gives a newborn cell the average color of its three live neighbors', () => {
     const game = new Game();
     setCell(game.current, 1, 0, packColor(255, 0, 0));
@@ -225,5 +293,17 @@ describe('Game timer loop', () => {
 
     game.clear();
     expect(game.tick).toBe(0);
+  });
+
+  it('does not double-schedule ticks when start is called twice', () => {
+    const game = new Game(50);
+    const ticks: number[] = [];
+    game.onTick = (result) => ticks.push(result.tick);
+
+    game.start();
+    game.start();
+
+    vi.advanceTimersByTime(100);
+    expect(ticks).toEqual([1, 2]);
   });
 });

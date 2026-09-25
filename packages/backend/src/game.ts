@@ -51,6 +51,7 @@ export class Game {
   clear(): void {
     this.current = createEmptyGrid();
     this.tick = 0;
+    this.pendingPaints.clear();
   }
 
   private applyPendingPaints(): void {
@@ -90,7 +91,9 @@ export class Game {
 
         // Apply rules based on the state of the cell and its neighbors
         if (cell !== DEAD) {
-          // if cell is alive and has 2 or 3 live neighbors, no change needed. If it does not not have 2 or 3 live neighbors, it dies
+          // If cell is alive and has 2 or 3 live neighbors, it survives.
+          // If it has less than 2, it dies of underpopulation
+          // If it has more than 3, it dies of overcrowding
           next[i] = neighbors === 2 || neighbors === 3 ? cell : DEAD;
         } else if (neighbors === 3) {
           // if cell is dead but has 3 live neighbors, it comes back to life with average color of the live neighbors

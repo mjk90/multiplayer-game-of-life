@@ -92,17 +92,11 @@ describe('Game', () => {
 
     const result = game.runTick();
 
-    const births = result.changes.filter((change) => change.color !== DEAD).map((change) => [change.x, change.y]);
-    const deaths = result.changes.filter((change) => change.color === DEAD).map((change) => [change.x, change.y]);
+    const births = result.changes.filter((change) => change.color !== DEAD).map((change) => [change.i]);
+    const deaths = result.changes.filter((change) => change.color === DEAD).map((change) => [change.i]);
 
-    expect(births).toEqual([
-      [11, 9],
-      [11, 11],
-    ]);
-    expect(deaths).toEqual([
-      [10, 10],
-      [12, 10],
-    ]);
+    expect(births).toEqual([[1811], [2211]]);
+    expect(deaths).toEqual([[2010], [2012]]);
   });
 
   it('recolors an alive cell via a queued paint', () => {

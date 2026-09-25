@@ -222,7 +222,7 @@ describe('calculateDelta', () => {
     const next = createEmptyGrid();
     setCell(next, 2, 3, 0xabcdef);
 
-    expect(calculateDelta(prev, next)).toEqual([{ x: 2, y: 3, color: 0xabcdef }]);
+    expect(calculateDelta(prev, next)).toEqual([{ i: 602, color: 0xabcdef }]);
   });
 
   it('reports a dead cell with color 0', () => {
@@ -230,7 +230,7 @@ describe('calculateDelta', () => {
     setCell(prev, 4, 5, 0xffffff);
     const next = createEmptyGrid();
 
-    expect(calculateDelta(prev, next)).toEqual([{ x: 4, y: 5, color: DEAD }]);
+    expect(calculateDelta(prev, next)).toEqual([{ i: 1004, color: DEAD }]);
   });
 });
 

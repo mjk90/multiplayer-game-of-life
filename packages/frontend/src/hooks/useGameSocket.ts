@@ -1,4 +1,4 @@
-import { EVENTS, GameSnapshot, GameTickPacket, GRID_SIZE, indexOf, PaintPacket, StatusPacket } from '@life/shared';
+import { EVENTS, GameSnapshot, GameTickPacket, GRID_SIZE, PaintPacket, StatusPacket } from '@life/shared';
 import { useEffect, useRef, useState } from 'react';
 
 import { io, Socket } from 'socket.io-client';
@@ -55,7 +55,7 @@ export function useGameSocket() {
       setGrid((prev) => {
         const next = new Uint32Array(prev);
         for (const change of packet.changes) {
-          next[indexOf(change.x, change.y)] = change.color;
+          next[change.i] = change.color;
         }
         return next;
       });

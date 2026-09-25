@@ -34,8 +34,7 @@ export interface GameSnapshot {
 
 /** A single cell change emitted in a delta. `color` is packed RGB; 0 = dead. */
 export interface CellChange {
-  x: number;
-  y: number;
+  i: number;
   color: number;
 }
 
@@ -70,13 +69,13 @@ export interface PlacePatternPacket {
 // ---- Cell Colors ----
 export const PALETTE = [
   0x22d3ee, // cyan
-  0x34d399, // green
   0xfacc15, // yellow
   0xfb923c, // orange
   0xef4444, // red
   0xec4899, // pink
   0xa78bfa, // purple
   0x60a5fa, // blue
+  0x34d399, // green
 ];
 
 // Sentinel color value for "dead"
@@ -90,14 +89,6 @@ export function createEmptyGrid(): Uint32Array {
 /** Convert grid (x, y) coordinates to a flat array index. */
 export function indexOf(x: number, y: number): number {
   return y * GRID_WIDTH + x;
-}
-
-/** Convert flat array index to grid (x, y) coordinates */
-export function coordinatesToIndex(i: number): { x: number, y: number } {
-  return {
-    x: i % GRID_WIDTH,
-    y: Math.floor(i / GRID_WIDTH),
-  }
 }
 
 /** Set a single cell's color (0 = dead). */
@@ -128,8 +119,7 @@ export function calculateDelta(prev: Uint32Array, next: Uint32Array): CellChange
 
   for (let i = 0; i < GRID_SIZE; i++) {
     if (prev[i] !== next[i]) {
-      const { x, y } = coordinatesToIndex(i);
-      changes.push({ x, y, color: next[i] });
+      changes.push({ i, color: next[i] });
     }
   }
 

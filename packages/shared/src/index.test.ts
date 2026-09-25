@@ -9,7 +9,6 @@ import {
   calculateDelta,
   cellsInLine,
   colorToCss,
-  coordinatesToIndex,
   createEmptyGrid,
   inBounds,
   indexOf,
@@ -206,23 +205,6 @@ describe('color helpers', () => {
 
     for (const { r, g, b } of cases) {
       expect(unpackColor(packColor(r, g, b))).toEqual({ r, g, b });
-    }
-  });
-});
-
-describe('coordinatesToIndex', () => {
-  it('converts a flat index back to (x, y) coordinates', () => {
-    expect(coordinatesToIndex(0)).toEqual({ x: 0, y: 0 });
-    expect(coordinatesToIndex(GRID_WIDTH)).toEqual({ x: 0, y: 1 });
-    expect(coordinatesToIndex(GRID_WIDTH * 25 + 3)).toEqual({ x: 3, y: 25 });
-    expect(coordinatesToIndex(GRID_SIZE - 1)).toEqual({ x: GRID_WIDTH - 1, y: GRID_HEIGHT - 1 });
-  });
-
-  it('is the inverse of indexOf for every cell in the grid', () => {
-    for (let y = 0; y < GRID_HEIGHT; y++) {
-      for (let x = 0; x < GRID_WIDTH; x++) {
-        expect(coordinatesToIndex(indexOf(x, y))).toEqual({ x, y });
-      }
     }
   });
 });

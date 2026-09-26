@@ -211,6 +211,8 @@ Socket.IO provides:
 
 Each tab generates a random UUID stored in `sessionStorage` and sends it as Socket.IO `auth.playerId`. Because `sessionStorage` is scoped per tab, each tab is its own player, while a reload within the same tab reuses the id. The backend uses the id to remember the player's colour across reconnects: when the player disconnects, their colour is held for 30 seconds and reclaimed if they reconnect in time. Anonymous clients (no player id) release their colour immediately.
 
+This is implemented by the backend's `ColorRegistry` class, which tracks the set of reserved colours and the per player grace period timers.
+
 ### Delta updates instead of full snapshots
 
 Sending the full 40,000-cell board every tick is wasteful. The server computes the changed cells and broadcasts only those. Clients start from a snapshot and apply deltas.
@@ -246,7 +248,7 @@ nginx serves the static bundle efficiently and proxies the Socket.IO WebSocket t
 - **Random pattern placement.** Patterns drop at random coordinates; there is no click-to-place UI.
 - **Fixed pattern orientation.** Patterns spawn in a single hard-coded orientation, so they always point the same way. A future improvement would randomize (or allow rotating) the orientation at placement time.
 - **No end-to-end tests.** The game logic and helpers are unit-tested, but the real socket wiring and browser interactions are not covered by an automated E2E suite.
-- **Fixed board size.** `GRID_WIDTH`/`GRID_HEIGHT` are compile-time constants rather than server-provided, because the client and server must agree on them. This is intentional to avoid drift; making it dynamic would require the client to adopt the server's dimensions from the snapshot.
+- **Fixed board size.** `GRID_WIDTH`/`GRID_HEIGHT` are compile-time constants rather than server-provided, because the client and server must agree on them. The board may be rectangular (the frontend letterboxes it to fit), but the dimensions are still fixed at build time. Making them dynamic would require the client to adopt the server's dimensions from the snapshot.
 
 ---
 

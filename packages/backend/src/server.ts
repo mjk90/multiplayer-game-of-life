@@ -1,7 +1,8 @@
 import { createServer, Server as HttpServer } from 'node:http';
 import { Server as SocketIoServer } from 'socket.io';
 import { Game } from './game';
-import { EVENTS, GameSnapshot, GameTickPacket, GRID_HEIGHT, GRID_WIDTH, inBounds, packColor, PaintPacket, PALETTE, PATTERNS, PlacePatternPacket, StatusPacket, wrapX, wrapY } from '@life/shared';
+import { ColorRegistry } from './colorRegistry';
+import { EVENTS, GameSnapshot, GameTickPacket, GRID_HEIGHT, GRID_WIDTH, inBounds, PaintPacket, PATTERNS, PlacePatternPacket, StatusPacket, wrapX, wrapY } from '@life/shared';
 
 export interface GameServer {
   io: SocketIoServer;
@@ -23,26 +24,6 @@ const status = (game: Game, clientCount: number): StatusPacket => ({
   online: clientCount,
 });
 
-const getAvailableColor = (usedColors: Set<number>): number => {
-  // Look for a free color in the pre set palette
-  const free = PALETTE.find((color) => !usedColors.has(color));
-  if (free !== undefined) {
-    return free;
-  }
-
-  // More clients than palette entries: generate a random bright color.
-  let color = 0;
-  do {
-    color = packColor(
-      80 + Math.floor(Math.random() * 176),
-      80 + Math.floor(Math.random() * 176),
-      80 + Math.floor(Math.random() * 176),
-    );
-  } while (usedColors.has(color));
-
-  return color;
-};
-
 export function startServer(port = 3001): Promise<GameServer> {
   const httpServer = createServer();
   // TODO: Update CORS for prod to allow frontend to connect only
@@ -51,10 +32,8 @@ export function startServer(port = 3001): Promise<GameServer> {
   const game = new Game();
   game.start();
 
-  // Keep track of user connection id to color
-  const socketColors = new Map<string, number>();
-  // Keep track of which colors are already in use
-  const usedColors = new Set<number>();
+  // Assigns and reclaims player colours across reconnects.
+  const colors = new ColorRegistry();
 
   game.onTick = (result) => {
     const packet: GameTickPacket = { tick: result.tick, changes: result.changes };
@@ -65,10 +44,13 @@ export function startServer(port = 3001): Promise<GameServer> {
   io.on('connection', (socket) => {
     console.log('Client connected', socket.id);
 
-    // Get an available color. Register it for this socket id and register it as "in use"
-    const color = getAvailableColor(usedColors);
-    usedColors.add(color);
-    socketColors.set(socket.id, color);
+    const playerId =
+      typeof socket.handshake.auth?.playerId === 'string' && socket.handshake.auth.playerId
+        ? socket.handshake.auth.playerId
+        : undefined;
+
+    const color = colors.register(playerId);
+    socket.data.color = color;
 
     // Send snapshot & status info of the current game state to the newly connected client
     socket.emit(EVENTS.snapshot, snapshot(game, color));
@@ -98,7 +80,7 @@ export function startServer(port = 3001): Promise<GameServer> {
       // Clear game state and emit new empty snapshot to all clients
       game.clear();
       for (const s of io.sockets.sockets.values()) {
-        const color = socketColors.get(s.id) ?? 0;
+        const color = (s.data.color as number | undefined) ?? 0;
         s.emit(EVENTS.snapshot, snapshot(game, color));
       }
       io.emit(EVENTS.status, status(game, io.engine.clientsCount));
@@ -119,12 +101,7 @@ export function startServer(port = 3001): Promise<GameServer> {
     });
 
     socket.on('disconnect', () => {
-      // Unregister the disconnecting user's color
-      const c = socketColors.get(socket.id);
-      if (c !== undefined) {
-        usedColors.delete(c);
-        socketColors.delete(socket.id);
-      }
+      colors.unregister(playerId, color);
     });
   });
 

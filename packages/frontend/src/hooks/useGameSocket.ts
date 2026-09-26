@@ -9,6 +9,18 @@ export enum ConnectionState {
   Disconnected = 'disconnected',
 }
 
+const PLAYER_ID_KEY = 'life-player-id';
+
+function getPlayerId(): string {
+  const existing = sessionStorage.getItem(PLAYER_ID_KEY);
+  if (existing) return existing;
+
+  const id = crypto.randomUUID();
+
+  sessionStorage.setItem(PLAYER_ID_KEY, id);
+  return id;
+}
+
 export interface GameSocketApi {
   grid: Uint32Array;
   tick: number;
@@ -32,7 +44,10 @@ export function useGameSocket() {
 
   useEffect(() => {
     console.log('Connecting to game server...');
-    const socket = io({ transports: ['websocket'] });
+    const socket = io({
+      transports: ['websocket'],
+      auth: { playerId: getPlayerId() },
+    });
     socketRef.current = socket;
 
     socket.on('connect', () => setConnectionState(ConnectionState.Connected));

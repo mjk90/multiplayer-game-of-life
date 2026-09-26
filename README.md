@@ -13,6 +13,7 @@ A real-time, multiplayer implementation of Conway's Game of Life. Multiple playe
 - [Technical choices](#technical-choices)
 - [Trade-offs and limitations](#trade-offs-and-limitations)
 - [What I would do with more time](#what-i-would-do-with-more-time)
+- [AI usage](#ai-usage)
 
 ---
 
@@ -265,6 +266,12 @@ nginx serves the static bundle efficiently and proxies the Socket.IO WebSocket t
 
 ---
 
+## AI usage
+
+AI assistance (GitHub Copilot) was used for parts of this project. A detailed write-up is in [`ai-usage.md`](ai-usage.md).
+
+---
+
 ## Repository layout
 
 ```text
@@ -275,7 +282,9 @@ nginx serves the static bundle efficiently and proxies the Socket.IO WebSocket t
 ├── Dockerfile
 ├── docker-compose.yml
 ├── Docker.md                 # detailed Docker explanation
+├── ai-usage.md               # AI usage documentation
 ├── package.json              # workspaces + root scripts
+├── plan.md                   # original project plan
 └── packages/
     ├── backend/              # Socket.IO server + game engine
     │   └── src/

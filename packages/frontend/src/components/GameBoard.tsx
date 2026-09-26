@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
-import { PaintPacket, PaintCell, GRID_WIDTH, indexOf, cellsInLine } from '@life/shared';
+import { PaintPacket, PaintCell, GRID_WIDTH, GRID_HEIGHT, indexOf, cellsInLine } from '@life/shared';
 import { calculateGridSizes, cellFromEvent, drawBackground, drawLiveCells } from '../helpers/canvas';
 
 interface GameBoardProps {
@@ -23,19 +23,20 @@ export function GameBoard({ grid, onPaint }: GameBoardProps) {
 
 
   const draw = (container: HTMLElement, canvas: HTMLCanvasElement) => {
-    const { dpr = 0, size = 0, cellSize = 0 } = calculateGridSizes(container, GRID_WIDTH) || {};
-    if (size <= 0) return;
+    const { dpr = 0, width = 0, height = 0, cellSize = 0 } =
+      calculateGridSizes(container, GRID_WIDTH, GRID_HEIGHT) || {};
+    if (width <= 0 || height <= 0) return;
 
-    // Set the canvas size to match the container size and device pixel ratio
-    canvas.style.width = `${size}px`;
-    canvas.style.height = `${size}px`;
-    canvas.width = Math.round(size * dpr);
-    canvas.height = Math.round(size * dpr);
+    // Size the canvas to the board's aspect ratio, scaled for the device pixel ratio.
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    drawBackground(ctx, size, dpr);
+    drawBackground(ctx, width, height, dpr);
     drawLiveCells(ctx, grid, cellSize);
   }
 

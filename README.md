@@ -13,6 +13,7 @@ A real-time, multiplayer implementation of Conway's Game of Life. Multiple playe
 - [Technical choices](#technical-choices)
 - [Trade-offs and limitations](#trade-offs-and-limitations)
 - [What I would do with more time](#what-i-would-do-with-more-time)
+- [AI usage](#ai-usage)
 
 ---
 
@@ -43,7 +44,7 @@ The server is the single source of truth. On connection a client receives a full
 
 | Package | Role | Key dependencies |
 | --- | --- | --- |
-| `@life/shared` | Types, events, grid/colour helpers, patterns | none (pure TS) |
+| `@life/shared` | Types, events, grid/colour helpers, patterns | no runtime dependencies |
 | `@life/backend` | Authoritative game state + Socket.IO server | `socket.io`, `tsx`, `tsup`, `vitest` |
 | `@life/frontend` | React UI + canvas rendering | `react`, `vite`, `socket.io-client` |
 
@@ -116,7 +117,7 @@ This runs the `test` script in every workspace that defines one.
 Coverage includes:
 
 - **`@life/shared`** — grid indexing/wrapping/bounds, colour packing/unpacking, `cellsInLine` (Bresenham), `calculateDelta`, and pattern validity.
-- **`@life/backend`** — Conway rules (birth, survival, under/overpopulation), toroidal wrapping, colour averaging, delta generation, queued paints, clearing, and the timer loop.
+- **`@life/backend`** — Conway rules (birth, survival, under/overpopulation), toroidal wrapping, colour averaging, delta generation, queued paints, clearing, the timer loop, and colour assignment/grace-period reclamation (`ColorRegistry`).
 
 Run a single package:
 
@@ -124,6 +125,12 @@ Run a single package:
 npm run test --workspace @life/backend
 npm run test --workspace @life/shared
 ```
+
+### Continuous integration
+
+A GitHub Actions workflow (`.github/workflows/ci.yml`) runs on every push to `main` and every pull request. It installs dependencies with `npm ci`, then runs `npm test` and `npm run build`.
+
+> The check is informational on this private repository; blocking merges on it requires branch protection (a Team/Enterprise GitHub plan).
 
 ---
 
@@ -201,6 +208,12 @@ Socket.IO provides:
 - Automatic reconnection, which matters when the server restarts in dev or a client drops.
 - Named events, so the protocol is explicit.
 
+### Player identity and colour grace period
+
+Each tab generates a random UUID stored in `sessionStorage` and sends it as Socket.IO `auth.playerId`. Because `sessionStorage` is scoped per tab, each tab is its own player, while a reload within the same tab reuses the id. The backend uses the id to remember the player's colour across reconnects: when the player disconnects, their colour is held for 30 seconds and reclaimed if they reconnect in time. Anonymous clients (no player id) release their colour immediately.
+
+This is implemented by the backend's `ColorRegistry` class, which tracks the set of reserved colours and the per player grace period timers.
+
 ### Delta updates instead of full snapshots
 
 Sending the full 40,000-cell board every tick is wasteful. The server computes the changed cells and broadcasts only those. Clients start from a snapshot and apply deltas.
@@ -208,7 +221,7 @@ Sending the full 40,000-cell board every tick is wasteful. The server computes t
 ### Packed colours and typed arrays
 
 Each cell is one 24-bit integer in a `Uint32Array`. This is memory-efficient, cache-friendly for the per-tick scan, and trivially serializable for Socket.IO. A dead cell is `0`.
-At 200x200, we could use a 2D array without noticable performance impact, but this makes it more scalable with not much added complexity (just the `indexOf` helper function).
+At 200×200, we could use a 2D array without noticeable performance impact, but this makes it more scalable with not much added complexity (just the `indexOf` helper function).
 
 ### React + Vite + Canvas
 
@@ -229,15 +242,14 @@ nginx serves the static bundle efficiently and proxies the Socket.IO WebSocket t
 
 - **Single process, in-memory state.** The board lives in one Node process. Restarting the server clears the board, and the game cannot be scaled horizontally as-is. Multi-server support would require moving state to a shared store (e.g. Redis) and a Socket.IO adapter. For the requirements of this project, this kind of scalability is not needed.
 - **Full-board scan each tick.** Computing the next generation scans all 40,000 cells every 25 ms. This is well within a single process's budget for the current board size, but it does not scale to much larger boards without optimisation (e.g. tracking only live cells and their neighbours).
-    - A full board scan was the simplest working implementation for this demo. If we wanted to support much larger boards and even lower tick intervals. we could use a set of live cells and their neighbors
+    - A full board scan was the simplest working implementation for this demo. If we wanted to support much larger boards and even lower tick intervals, we could use a set of live cells and their neighbours.
 - **No persistence.** Players' colours, board state, and generations are lost on restart.
-- **Colour is released on disconnect.** A player's colour is freed as soon as they disconnect, so a brief network drop can mean they come back with a different colour. In future, colours could be reserved for a short grace period and reassigned on reconnect (e.g. remembered by IP or browser storage).
 - **No auth or rate limiting.** `paint` and `clear` are trusted after basic bounds validation. A production service would add identity, per-player quotas, and abuse protection, as well as using something like cloudflare to gate everything.
 - **CORS is permissive in development.** Dev uses a wildcard because the Vite origin differs from the backend. Production relies on same-origin proxying through nginx; the backend's production CORS handling is still marked `TODO`.
 - **Random pattern placement.** Patterns drop at random coordinates; there is no click-to-place UI.
 - **Fixed pattern orientation.** Patterns spawn in a single hard-coded orientation, so they always point the same way. A future improvement would randomize (or allow rotating) the orientation at placement time.
 - **No end-to-end tests.** The game logic and helpers are unit-tested, but the real socket wiring and browser interactions are not covered by an automated E2E suite.
-- **Fixed board size.** `GRID_WIDTH`/`GRID_HEIGHT` are compile-time constants rather than server-provided, because the client and server must agree on them. This is intentional to avoid drift; making it dynamic would require the client to adopt the server's dimensions from the snapshot.
+- **Fixed board size.** `GRID_WIDTH`/`GRID_HEIGHT` are compile-time constants rather than server-provided, because the client and server must agree on them. The board may be rectangular (the frontend letterboxes it to fit), but the dimensions are still fixed at build time. Making them dynamic would require the client to adopt the server's dimensions from the snapshot.
 
 ---
 
@@ -248,9 +260,15 @@ nginx serves the static bundle efficiently and proxies the Socket.IO WebSocket t
 - **Hardened networking:** authentication, per-socket rate limits, and a proper production CORS policy.
 - **End-to-end tests** with Playwright: open two browsers, paint from both, and assert both converge to the same board.
 - **Observability:** structured logs, metrics (ticks/sec, connected clients, delta sizes), and health endpoints. Set up prometheus/grafana to watch metrics.
-- **Richer gameplay:** click-to-place patterns, multiple rooms/boards, persistence and replay of games, spectator mode, and adjustable speed.
-- **Dynamic board dimensions:** have the client adopt `width`/`height` from the snapshot so the board size is controlled only by the server. The dimensions could then be set from the backend config.
-- **CI pipeline:** run tests and typechecks, then build and push Docker images on merge.
+- **Richer gameplay:** click-to-place patterns, multiple rooms/boards, persistence and replay of games, spectator mode, and adjustable speed. Add some kind of goal (eg. control x% of the board)
+- **Dynamic board dimensions:** have the client adopt `width`/`height` from the snapshot so the board size is controlled only by the server. The dimensions could then be set from the backend config without code changes.
+- **Extend CI:** build and publish the Docker images as part of the pipeline.
+
+---
+
+## AI usage
+
+AI assistance (GitHub Copilot) was used for parts of this project. A detailed write-up is in [`ai-usage.md`](ai-usage.md).
 
 ---
 
@@ -258,13 +276,19 @@ nginx serves the static bundle efficiently and proxies the Socket.IO WebSocket t
 
 ```text
 .
+├── .github/
+│   └── workflows/
+│       └── ci.yml            # GitHub Actions CI
 ├── Dockerfile
 ├── docker-compose.yml
-├── docker.md                 # detailed Docker explanation
+├── Docker.md                 # detailed Docker explanation
+├── ai-usage.md               # AI usage documentation
 ├── package.json              # workspaces + root scripts
+├── plan.md                   # original project plan
 └── packages/
     ├── backend/              # Socket.IO server + game engine
     │   └── src/
+    │       ├── colorRegistry.ts  # player colour assignment/grace period
     │       ├── game.ts       # Game class (board, ticks, rules)
     │       └── server.ts     # HTTP + Socket.IO wiring
     ├── frontend/             # React client

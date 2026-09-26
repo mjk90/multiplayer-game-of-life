@@ -8,26 +8,33 @@ export const COLOR_BG = '#0f172a';
  * @param gridWidth
  * @returns device pixel ratio, grid size, and cell size
  */
-export const calculateGridSizes = (container: HTMLElement, gridWidth: number) => {
-  const width = container.clientWidth;
-  const height = container.clientHeight || width;
-  const size = Math.min(width, height);
-  if (size <= 0) return;
+export const calculateGridSizes = (container: HTMLElement, gridWidth: number, gridHeight: number) => {
+  const containerWidth = container.clientWidth;
+  const containerHeight = container.clientHeight || containerWidth;
+
+  if (containerWidth <= 0 || containerHeight <= 0) return;
 
   const dpr = window.devicePixelRatio || 1;
-  const cellSize = size / gridWidth;
 
-  return { dpr, size, cellSize };
+  // Fit the board into the container while preserving the grid's aspect ratio
+  // (cells stay square).
+  const cellSize = Math.min(containerWidth / gridWidth, containerHeight / gridHeight);
+  if (cellSize <= 0) return;
+
+  const width = cellSize * gridWidth;
+  const height = cellSize * gridHeight;
+
+  return { dpr, width, height, cellSize };
 }
 
 
 // ---- Drawing functions ----
 
-export const drawBackground = (ctx: CanvasRenderingContext2D, size: number, dpr: number) => {
+export const drawBackground = (ctx: CanvasRenderingContext2D, width: number, height: number, dpr: number) => {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  ctx.clearRect(0, 0, size, size);
+  ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = COLOR_BG;
-  ctx.fillRect(0, 0, size, size);
+  ctx.fillRect(0, 0, width, height);
 }
 
 export const drawLiveCells = (ctx: CanvasRenderingContext2D, grid: Uint32Array, cellSize: number) => {
